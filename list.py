@@ -1,3 +1,4 @@
+
 a = [1,2,3,8,5]
 b =[]
 for i in a:
@@ -7,6 +8,14 @@ for i in a:
             c = c*j
         b.append(c)
     print(c)
+
+
+# Write a function that takes a comma-separated string of numbers and converts it into a list of integers.
+
+def str_list(s):
+    return list(map(int,s.split(',')))
+
+print(str_list("1,2,3,4,5")) 
 
 
 
