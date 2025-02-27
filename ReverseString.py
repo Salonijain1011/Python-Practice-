@@ -31,3 +31,4 @@ for i in range(len(d)):
 output = ' '.join(d)  
 print(output)
   
+
