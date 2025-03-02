@@ -1,5 +1,4 @@
-#Take string as input and print dictionary where character in string will 
-# be keys and frequency of character will be the value
+# Convert a string to a dictionary where characters are keys and their occurrences are values.
 
 def string_dic(s):
   dic={}

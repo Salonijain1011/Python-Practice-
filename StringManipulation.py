@@ -50,3 +50,35 @@ for i in string:
       if freq[i] == 1:
         print(i)
         break
+
+      
+# Given a string (a2b3c2) print output (aabbbcc)          
+s = "a2b3c2"
+a =[]
+for i in range(0,len(s)-1,2):
+      char = s[i]
+      count = int(s[i + 1])
+      a.append(char*count)
+print(''.join(a))
+
+
+# Given input (aa2b38cd4) output(aa*4b*38cd*4)
+s = "aa2b38cd4"
+result =[]
+temp = ""
+num = ""
+for char in s:
+        if char.isalpha(): 
+            if num: 
+                result.append(temp * int(num))
+                temp = "" 
+                num = ""   
+            temp += char 
+        elif char.isdigit(): 
+            num += char
+if temp:
+    if num:
+            result.append(temp * int(num))
+    else:
+            result.append(temp)
+print("".join(result)) 
