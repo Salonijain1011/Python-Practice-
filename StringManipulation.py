@@ -82,3 +82,48 @@ if temp:
     else:
             result.append(temp)
 print("".join(result)) 
+
+
+# Modify the given string by inserting * before and after numbers.
+# Input: "hello23world9"
+# Output: "hello*23*world*9*"
+
+string = "hello23world9"
+result=[]
+temp=""
+num = ""
+for i in string:
+    if i.isdigit():
+        if temp: 
+            result.append(temp)
+            result.append('*')
+            temp = "" 
+        num += i
+    elif i.isalpha(): 
+        if num:
+            result.append(num)
+            result.append('*')
+            num = ""
+        temp += i
+if num:
+    result.append(num)
+    result.append('*')
+elif temp:
+    result.append(temp)
+print("".join(result))
+
+
+# Capitalize Every Third Letter in a String
+# Input: "this is a sample text"
+# Output: "thIs is A saMple teXt"
+
+string = "this is a sample text"
+s = string.split()
+a = []
+for i in s:
+    if len(i)>2:
+      c = i[0:2] +i[2].upper() +i[3:]
+    else:
+      c=i
+    a.append(c)
+print(' '.join(a))
