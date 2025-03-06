@@ -127,3 +127,65 @@ for i in s:
       c=i
     a.append(c)
 print(' '.join(a))
+
+
+# Find the Longest Word in a Sentence
+# Write a program to find the longest word in a given sentence.
+s = "Django is a Python based web framework"
+a = s.split()
+b = ''
+max = 0
+for i in a:
+    if len(i)>len(b):
+        b=i
+print(b)
+
+
+# Given a string, find the first character that does not repeat in it.
+s =  "swiss"
+freq={}
+for i in s:
+    if i in freq:
+        freq[i]+=1
+    else:
+        freq[i]=1
+for i in s:
+      if freq[i] == 1:
+        print(i)
+        break
+
+
+# Reverse Every Alternate Word in a Sentence
+s = "I am learning Python programming"
+a = s.split()
+b = []
+for i in range(1,len(a),2):
+      a[i] = a[i][::-1]
+print(" ".join(a))
+
+
+# Write a function to compress a string by counting consecutive repeating characters.
+s = "aaabbcddd"
+freq={}
+result=[]
+for i in s:
+    if i in freq:
+        freq[i]+=1
+    else:
+        freq[i]=1
+for key,value in freq.items():
+    result.append(str(key)+str(value))
+print("".join(result))
+
+
+#Replace Consecutive Duplicate Characters
+#Modify a string to replace consecutive duplicate characters with a single occurrence.
+a = "aabbcccddaa"
+res=[]
+s=''
+for i in a:
+    if i !=s:
+       res.append(i)
+    s = i
+print(''.join(res))
+
