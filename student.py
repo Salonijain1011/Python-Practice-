@@ -1,13 +1,5 @@
 import sqlite3
 
-def add_book(title, author):
-    conn = sqlite3.connect("library.db")
-    cur = conn.cursor()
-    cur.execute("INSERT INTO books (title, author, status) VALUES (?, ?, 'Available')", (title, author))
-    conn.commit()
-    conn.close()
-    print(f"Book '{title}' added successfully!")
-
 def display_books():
     conn = sqlite3.connect("library.db")
     cur = conn.cursor()
@@ -18,14 +10,6 @@ def display_books():
     print("\nBooks in Library:")
     for book in books:
         print(f"{book[0]} | {book[1]} | {book[2]} | {book[3]} | Issued To: {book[4]}")
-    
-def delete_book(book_id):
-    conn = sqlite3.connect("library.db")
-    cur = conn.cursor()
-    cur.execute("DELETE FROM books WHERE id=?", (book_id,))
-    conn.commit()
-    conn.close()
-    print(f"Book with ID {book_id} deleted successfully!")
 
 def issue_book(book_id, student_name):
     conn = sqlite3.connect("library.db")
