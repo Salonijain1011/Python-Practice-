@@ -6,11 +6,13 @@ for i in lst:
     freq[i]+=1
   else:
     freq[i]=1
-max = 0  
-for value in freq.values():  
-    if value > max:  
-        max = value
-print(max)
+max=0
+max_key=None
+for key,value in freq.items():
+  if value>max:
+    max=value
+    max_key=key
+print(max_key)
 
 
 # Find all duplicates in a list [1, 2, 3, 4, 5, 2, 3, 6]
@@ -90,12 +92,12 @@ print(b)
 # Input = [1,2,3,4,3,2,1,4]  output = [1,2,3,4,_,_,_,_]
 #Method 1
 lst = [1,2,3,4,3,4,1,2]
-s = set(lst)
+s=set(lst)
+for i in range(len(lst)):
+  if len(lst)>len(s):
+    s=list(s)
+    s.append('_')
 print(s)
-i = list(s)
-for x in range(4):
-    i.append('_')
-print(i)
 
 
 #Method2

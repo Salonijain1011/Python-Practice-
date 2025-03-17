@@ -30,4 +30,13 @@ for i in range(len(d)):
     d[i] = d[i][::-1]
 output = ' '.join(d)  
 print(output)
+
+
+# Reverse Every Alternate Word in a Sentence
+s = "I am learning Python programming"
+a = s.split()
+b = []
+for i in range(1,len(a),2):
+      a[i] = a[i][::-1]
+print(" ".join(a))
   
