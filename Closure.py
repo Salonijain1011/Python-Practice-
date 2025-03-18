@@ -5,10 +5,10 @@ def counter(start):
         start +=1
         return start
     return inner
-count_from_5 = counter(5)
-print(count_from_5())  
-print(count_from_5())  
-print(count_from_5()) 
+c = counter(5)
+print(c())  
+print(c())  
+print(c()) 
 
 
 # Write a function multiplier(factor) that returns a function that multiplies any input by factor.
