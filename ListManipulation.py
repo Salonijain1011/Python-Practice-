@@ -118,3 +118,19 @@ for i in range(len(lst)):
         if lst[j] == lst[i] and lst[j]!="_":
             lst[j]= "_"
 print(lst)
+
+
+# given an array give the element nearest to 0 and if there are more than one contender then give the positive value
+def Solve (N, A):
+    A.sort()   
+    actual_no=A[0]
+    diff=abs(A[0])
+    for i in range(1,N-1):
+         if abs(A[i])<=diff:
+            actual_no = A[i]
+            diff=abs(A[i])
+    return actual_no
+N = 8
+A = [-3,-1,-4,4,2,5,1]
+out_ = Solve(N, A)
+print(out_)

@@ -189,3 +189,61 @@ for j in range(len(s)):
     s[i],s[j]=s[j],s[i]
     i+=1
 print(s)
+
+# Thursday
+# Given an array containing N-1 numbers from 1 to N, find the missing number.
+def Find_missing_num(arr,N):
+  tot_sum = N*(N+1)//2
+  arr_sum = sum(arr)
+  missing_num = tot_sum - arr_sum
+  return missing_num
+arr = [1,2,4,5,6]
+N = 6
+print(Find_missing_num(arr,N))   
+
+# Given an array of strings, find the longest common prefix.
+def longest_common_prefix(strs):
+    if not strs:
+        return ""
+    prefix = strs[0]  
+    for s in strs[1:]:
+        while not s.startswith(prefix):  
+            prefix = prefix[:-1]
+            if not prefix:
+                return ""
+    return prefix
+
+words = ["flower", "flow", "flight"]
+print(longest_common_prefix(words))  
+
+# Given a string, find the length of the longest substring without repeating characters.
+s = "abcabcbb"
+a = []
+for i in s:
+  if i not in a :
+    a.append(i)   
+print(''.join(a))
+    
+# A peak element is greater than its neighbors. Find one peak.
+def peak_element(nums):
+  for i in range(1,len(nums)-1):
+    if nums[i] > nums[i-1] and nums[i] > nums[i+1]:
+      return nums[i]
+  return nums[0] if nums[0]>nums[1] else nums[-1]
+nums=[1,2,3,1]
+print(peak_element(nums))  
+
+
+# Remove duplicate from a list
+l = [1,2,3,4,5,2,3,6]
+i=0
+while i < len(l):
+    j=i+1
+    while j < len(l):
+        if l[j]==l[i]:
+            del l[j]
+        else:
+            j=j+1
+    i=i+1
+print(l)
+                       
