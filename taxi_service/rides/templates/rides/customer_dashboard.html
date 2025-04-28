@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4>Your Rides</h4>
+                </div>
+                <div class="card-body">
+                    {% if customer_rides %}
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Ride ID</th>
+                                        <th>Status</th>
+                                        <th>Driver</th>
+                                        <th>Fare</th>
+                                        <th>Booking Time</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for ride in customer_rides %}
+                                        <tr>
+                                            <td>#{{ ride.id }}</td>
+                                            <td>
+                                                <span class="badge {% if ride.status == 'Completed' %}bg-success
+                                                            {% elif ride.status == 'Cancelled' %}bg-danger
+                                                            {% elif ride.status == 'Accepted' %}bg-primary
+                                                            {% else %}bg-warning{% endif %}">
+                                                    {{ ride.status }}
+                                                </span>
+                                            </td>
+                                            <td>{{ ride.driver.user.username|default:"Not assigned" }}</td>
+                                            <td>₹{{ ride.fare }}</td>
+                                            <td>{{ ride.created_at }}</td>
+                                            <td>
+                                                <a href="{% url 'ride_details' ride.id %}" class="btn btn-info btn-sm">
+                                                    View Details
+                                                </a>
+                                                {% if ride.status == 'Pending' or ride.status == 'Accepted' %}
+                                                    <a href="{% url 'cancel_ride' ride.id %}" class="btn btn-danger btn-sm">
+                                                        Cancel
+                                                    </a>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p>You haven't booked any rides yet.</p>
+                    {% endif %}
+
+                    <div class="mt-3">
+                        <a href="{% url 'book_ride' %}" class="btn btn-primary">Book a New Ride</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

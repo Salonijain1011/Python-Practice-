@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block extra_head %}
+<link href='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css' rel='stylesheet' />
+<script src='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js'></script>
+<script src='https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.7.0/mapbox-gl-geocoder.min.js'></script>
+<link rel='stylesheet' href='https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.7.0/mapbox-gl-geocoder.css' type='text/css' />
+<style>
+    #map { 
+        width: 100%;
+        height: 400px;
+        margin-bottom: 20px;
+    }
+    .mapboxgl-ctrl-geocoder {
+        width: 100% !important;
+        max-width: none !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2 class="text-center mb-4">Book a Ride</h2>
+
+    {% if error %}
+        <div class="alert alert-danger">{{ error }}</div>
+    {% endif %}
+
+    <div id="map"></div>
+
+    <form method="post" id="rideForm">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label for="pickup_latitude" class="form-label">Pickup Latitude</label>
+            <input type="text" class="form-control" id="pickup_latitude" name="pickup_latitude" required>
+        </div>
+        <div class="mb-3">
+            <label for="pickup_longitude" class="form-label">Pickup Longitude</label>
+            <input type="text" class="form-control" id="pickup_longitude" name="pickup_longitude" required>
+        </div>
+        <div class="mb-3">
+            <label for="drop_latitude" class="form-label">Drop Latitude</label>
+            <input type="text" class="form-control" id="drop_latitude" name="drop_latitude" required>
+        </div>
+        <div class="mb-3">
+            <label for="drop_longitude" class="form-label">Drop Longitude</label>
+            <input type="text" class="form-control" id="drop_longitude" name="drop_longitude" required>
+        </div>
+        <div class="mb-3">
+            <label for="car_type" class="form-label">Cab Type</label>
+            <select class="form-select" id="car_type" name="car_type">
+                <option value="Sedan">Sedan</option>
+                <option value="SUV">SUV</option>
+                <option value="Premium">Premium</option>
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary w-100">Book Ride</button>
+    </form>
+</div>
+
+<script>
+mapboxgl.accessToken = '{{ MAPBOX_ACCESS_TOKEN }}';
+
+const map = new mapboxgl.Map({
+    container: 'map',
+    style: 'mapbox://styles/mapbox/streets-v12',
+    center: [77.2090, 28.6139], // Default to New Delhi
+    zoom: 12
+});
+
+// Add navigation controls
+map.addControl(new mapboxgl.NavigationControl());
+
+// Initialize geocoders
+const geocoderPickup = new MapboxGeocoder({
+    accessToken: mapboxgl.accessToken,
+    mapboxgl: mapboxgl,
+    placeholder: 'Enter pickup location',
+    marker: true
+});
+
+const geocoderDrop = new MapboxGeocoder({
+    accessToken: mapboxgl.accessToken,
+    mapboxgl: mapboxgl,
+    placeholder: 'Enter drop location',
+    marker: true
+});
+
+// Add geocoders to the page
+document.getElementById('geocoder-pickup').appendChild(geocoderPickup.onAdd(map));
+document.getElementById('geocoder-drop').appendChild(geocoderDrop.onAdd(map));
+
+// Handle geocoder results
+geocoderPickup.on('result', function(e) {
+    document.getElementById('pickup_latitude').value = e.result.center[1];
+    document.getElementById('pickup_longitude').value = e.result.center[0];
+});
+
+geocoderDrop.on('result', function(e) {
+    document.getElementById('drop_latitude').value = e.result.center[1];
+    document.getElementById('drop_longitude').value = e.result.center[0];
+});
+
+// Form validation
+document.getElementById('rideForm').addEventListener('submit', function(e) {
+    if (!document.getElementById('pickup_latitude').value || 
+        !document.getElementById('drop_latitude').value) {
+        e.preventDefault();
+        alert('Please select both pickup and drop locations');
+    }
+});
+</script>
+{% if driver %}
+    {% include "driver_details.html" %}
+{% endif %}
+
+{% endblock %}
+

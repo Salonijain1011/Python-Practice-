@@ -10,19 +10,17 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
+import os
 from pathlib import Path
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-_$2u!k98-5y3qg(@)e(nd+gyp1a9sh=wpqdxl7%803(*mq^n9c'
+SECRET_KEY = 'django-insecure-your-secret-key-here'
 
-# SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
 ALLOWED_HOSTS = []
@@ -40,7 +38,6 @@ INSTALLED_APPS = [
     'rides',
     'rest_framework',
     'corsheaders',
-
 ]
 
 
@@ -48,18 +45,46 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:8000",
     "http://localhost:8000",
 ]
+
+CORS_ALLOW_METHODS = [
+    'GET',
+    'POST',
+    'PUT',
+    'PATCH',
+    'DELETE',
+    'OPTIONS'
+]
+
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+]
+
+# Add Mapbox domains to CORS
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^https://api\.mapbox\.com$",
+    r"^https://.*\.mapbox\.com$",
+]
+
 # CORS_ALLOW_ALL_ORIGINS = True
 
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    # 'django.middleware.csrf.CsrfViewMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
 ]
 
 ROOT_URLCONF = 'taxi_service.urls'
@@ -129,6 +154,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
@@ -159,3 +185,22 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.AllowAny',
     ),
 }
+
+GOOGLE_MAPS_API_KEY = 'YOUR_API_KEY'
+
+
+LOGIN_REDIRECT_URL = 'dashboard'
+LOGOUT_REDIRECT_URL = 'login'
+
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+DEFAULT_FROM_EMAIL = 'noreply@taxiservice.com'
+
+SESSION_COOKIE_AGE = 86400  
+SESSION_SAVE_EVERY_REQUEST = True
+
+SECURE_SSL_REDIRECT = False  
+SESSION_COOKIE_SECURE = False 
+CSRF_COOKIE_SECURE = False  
+
+# Mapbox Configuration
+MAPBOX_ACCESS_TOKEN = 'pk.eyJ1Ijoic2Fsb25pamFpbjEwMTEiLCJhIjoiY20zNG1mYXQ4MDB3cjJtcjF0MGs0cnVmYSJ9.n4wLlbPWf6CxcPrJF0wXeA'

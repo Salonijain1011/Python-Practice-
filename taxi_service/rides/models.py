@@ -1,6 +1,23 @@
 from django.db import models
 from django.contrib.auth.models import User
-from abc import ABC, abstractmethod
+from decimal import Decimal
+
+
+class UserProfile(models.Model):
+    USER_TYPES = [
+        ('driver', 'Driver'),
+        ('customer', 'Customer'),
+    ]
+    
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    user_type = models.CharField(max_length=10, choices=USER_TYPES)
+    phone_number = models.CharField(max_length=15, blank=True)
+    address = models.TextField(blank=True)
+    pending_cancellation_fee = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.username} - {self.user_type}"
 
 class Driver(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
@@ -8,31 +25,10 @@ class Driver(models.Model):
     longitude = models.FloatField(null=True, blank=True)
     is_available = models.BooleanField(default=True)
     rating = models.FloatField(default=5.0)
-    car_type = models.CharField(max_length=50, default="Sedan")  
+    car_type = models.CharField(max_length=50, default="Sedan")
 
-class LocationService:
-    @staticmethod
-    def update_driver_location(driver, lat, lon):
-        driver.latitude = lat
-        driver.longitude = lon
-        driver.save()
-
-class CancellationPolicy:
-    @staticmethod
-    def calculate_cancellation_fee(fare):
-        return round(fare * 0.05, 2)
-
-class RideService:
-    def __init__(self, driver_finder):
-        self.driver_finder = driver_finder
-
-    def assign_driver(self, ride):
-        nearest_driver = self.driver_finder.find_nearest(ride.pickup_latitude, ride.pickup_longitude)
-        if nearest_driver:
-            ride.driver = nearest_driver
-            nearest_driver.is_available = False
-            nearest_driver.save()
-            ride.save()
+    def __str__(self):
+        return f"{self.user.username} - Driver"
 
 REASONS = [
     ('Driver delayed', 'Driver delayed'),
@@ -54,13 +50,21 @@ class Ride(models.Model):
         ('Completed', 'Completed'),
         ('Cancelled', 'Cancelled')
     ], default='Pending')
-    fare = models.FloatField(default=0.0)  
-    cancellation_fee = models.FloatField(default=0.0)
+    fare = models.DecimalField(max_digits=10, decimal_places=2, default=0)  
+    cancellation_fee = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     estimated_time = models.CharField(max_length=50, null=True, blank=True)
     cancellation_reason = models.CharField(max_length=50, choices=REASONS, null=True, blank=True)
 
     def cancel_ride(self, reason):
         self.status = 'Cancelled'
-        self.cancellation_fee = CancellationPolicy.calculate_cancellation_fee(self.fare)
+        self.cancellation_fee = self.fare * Decimal('0.05')  
         self.cancellation_reason = reason
         self.save()
+
+class DeclinedRide(models.Model):
+    driver = models.ForeignKey(Driver, on_delete=models.CASCADE)
+    ride = models.ForeignKey(Ride, on_delete=models.CASCADE)
+    declined_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        unique_together = ('driver', 'ride')
