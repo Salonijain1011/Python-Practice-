@@ -1,0 +1,144 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_head %}
+<!-- Add Mapbox GL JS CSS and JS -->
+<link href='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css' rel='stylesheet' />
+<script src='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js'></script>
+<style>
+    #map { 
+        width: 100%;
+        height: 400px;
+        border-radius: 4px;
+        margin-bottom: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header">
+            <h4>Ride Details</h4>
+        </div>
+        <div class="card-body">
+            <!-- Ride Information -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <h5>Ride Information</h5>
+                    <p><strong>Status:</strong> 
+                        <span class="badge {% if ride.status == 'Completed' %}bg-success
+                                    {% elif ride.status == 'Cancelled' %}bg-danger
+                                    {% elif ride.status == 'Accepted' %}bg-primary
+                                    {% else %}bg-warning{% endif %}">
+                            {{ ride.status }}
+                        </span>
+                    </p>
+                    <p><strong>Fare:</strong> ₹{{ ride.fare }}</p>
+                </div>
+                <div class="col-md-6">
+                    <h5>Location Details</h5>
+                    <p><strong>Pickup Location:</strong><br>
+                        ({{ ride.pickup_latitude }}, {{ ride.pickup_longitude }})</p>
+                    <p><strong>Drop Location:</strong><br>
+                        ({{ ride.drop_latitude }}, {{ ride.drop_longitude }})</p>
+                </div>
+            </div>
+
+            {% if ride.status == 'Accepted' and ride.driver %}
+            <!-- Driver Information -->
+            <div class="row mb-4">
+                <div class="col-md-12">
+                    <h5>Driver Information</h5>
+                    <p><strong>Driver Name:</strong> {{ ride.driver.user.username }}</p>
+                    <p><strong>Rating:</strong> {{ ride.driver.rating }}/5.0</p>
+                </div>
+            </div>
+
+            <!-- Live Tracking Map -->
+            <h5>Live Tracking</h5>
+            <div id="map"></div>
+            {% endif %}
+
+            <!-- Action Buttons -->
+            {% if ride.status == 'Pending' or ride.status == 'Accepted' %}
+            <div class="mt-3">
+                <a href="{% url 'cancel_ride' ride.id %}" class="btn btn-danger">Cancel Ride</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% if ride.status == 'Accepted' and ride.driver %}
+<!-- Mapbox JavaScript -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    try {
+        // Initialize map
+        mapboxgl.accessToken = '{{ MAPBOX_ACCESS_TOKEN }}';
+        const map = new mapboxgl.Map({
+            container: 'map',
+            style: 'mapbox://styles/mapbox/streets-v12',
+            center: [{{ ride.pickup_longitude }}, {{ ride.pickup_latitude }}],
+            zoom: 12
+        });
+
+        // Add navigation controls
+        map.addControl(new mapboxgl.NavigationControl());
+
+        // Add pickup location marker
+        const pickupMarker = new mapboxgl.Marker({ color: '#00FF00' })
+            .setLngLat([{{ ride.pickup_longitude }}, {{ ride.pickup_latitude }}])
+            .setPopup(new mapboxgl.Popup().setHTML('<h6>Pickup Location</h6>'))
+            .addTo(map);
+
+        // Add drop location marker
+        const dropMarker = new mapboxgl.Marker({ color: '#FF0000' })
+            .setLngLat([{{ ride.drop_longitude }}, {{ ride.drop_latitude }}])
+            .setPopup(new mapboxgl.Popup().setHTML('<h6>Drop Location</h6>'))
+            .addTo(map);
+
+        // Add driver marker
+        const driverMarker = new mapboxgl.Marker({ color: '#0000FF' })
+            .setLngLat([{{ ride.driver.longitude }}, {{ ride.driver.latitude }}])
+            .setPopup(new mapboxgl.Popup().setHTML('<h6>Driver Location</h6>'))
+            .addTo(map);
+
+        // Function to update driver location
+        function updateDriverLocation() {
+            fetch('{% url "get_driver_location" ride.driver.id %}')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Update driver marker position
+                        driverMarker.setLngLat([data.longitude, data.latitude]);
+
+                        // Fit map bounds to include all markers
+                        const bounds = new mapboxgl.LngLatBounds()
+                            .extend([{{ ride.pickup_longitude }}, {{ ride.pickup_latitude }}])
+                            .extend([{{ ride.drop_longitude }}, {{ ride.drop_latitude }}])
+                            .extend([data.longitude, data.latitude]);
+                        map.fitBounds(bounds, { padding: 50 });
+                    }
+                })
+                .catch(error => console.error('Error updating driver location:', error));
+        }
+
+        // Update driver location every 5 seconds
+        const updateInterval = setInterval(updateDriverLocation, 5000);
+        updateDriverLocation(); // Initial update
+
+        // Cleanup on page unload
+        window.addEventListener('unload', function() {
+            clearInterval(updateInterval);
+        });
+
+    } catch (error) {
+        console.error('Error initializing map:', error);
+        document.getElementById('map').innerHTML = 'Error loading map. Please refresh the page.';
+    }
+});
+</script>
+{% endif %}
+{% endblock %} 

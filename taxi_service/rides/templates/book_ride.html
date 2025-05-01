@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-5">
+    <h2 class="text-center mb-4">Book a Ride</h2>
+
+    {% if error %}
+        <div class="alert alert-danger">{{ error }}</div>
+    {% endif %}
+
+    <form method="post">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label for="pickup_latitude" class="form-label">Pickup Latitude</label>
+            <input type="text" class="form-control" id="pickup_latitude" name="pickup_latitude" required>
+        </div>
+        <div class="mb-3">
+            <label for="pickup_longitude" class="form-label">Pickup Longitude</label>
+            <input type="text" class="form-control" id="pickup_longitude" name="pickup_longitude" required>
+        </div>
+        <div class="mb-3">
+            <label for="drop_latitude" class="form-label">Drop Latitude</label>
+            <input type="text" class="form-control" id="drop_latitude" name="drop_latitude" required>
+        </div>
+        <div class="mb-3">
+            <label for="drop_longitude" class="form-label">Drop Longitude</label>
+            <input type="text" class="form-control" id="drop_longitude" name="drop_longitude" required>
+        </div>
+        <div class="mb-3">
+            <label for="car_type" class="form-label">Cab Type</label>
+            <select class="form-select" id="car_type" name="car_type">
+                <option value="Sedan">Sedan</option>
+                <option value="SUV">SUV</option>
+                <option value="Premium">Premium</option>
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary w-100">Book Ride</button>
+    </form>
+</div>
+{% if driver %}
+    {% include "driver_details.html" %}
+{% endif %}
+
+{% endblock %}
+
