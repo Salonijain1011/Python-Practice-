@@ -27,7 +27,6 @@ User = get_user_model()
 
 @csrf_exempt
 def register_view(request):
-    """Register a new user as driver or customer."""
     if request.method == "GET":
         return render(request, "register.html")
 
@@ -58,7 +57,6 @@ def register_view(request):
 
 @csrf_exempt
 def login_view(request):
-    """Authenticate user login."""
     if request.method == "GET":
         return render(request, "login.html")
 
@@ -82,26 +80,22 @@ def login_view(request):
 
 @csrf_exempt
 def logout_user(request):
-    """Log out the current user."""
     logout(request)
     return redirect("login")
 
 
 class AvailableDriversView(generics.ListAPIView):
-    """List all available drivers."""
     queryset = Driver.objects.filter(is_available=True)
     serializer_class = DriverSerializer
 
 
 def validate_request_data(request, required_fields):
-    """Ensure required fields are in request."""
     if not all(request.data.get(field) for field in required_fields):
         return Response({"error": "Missing required fields"}, status=400)
     return None
 
 
 def get_customer_by_id(customer_id):
-    """Fetch customer by user ID."""
     try:
         return User.objects.get(id=customer_id)
     except User.DoesNotExist:
@@ -111,7 +105,6 @@ def get_customer_by_id(customer_id):
 @csrf_exempt
 @api_view(['POST'])
 def request_ride(request):
-    """Create a new ride request."""
     validation_response = validate_request_data(request, ['pickup_latitude', 'pickup_longitude', 'drop_latitude', 'drop_longitude', 'customer'])
     if validation_response:
         return validation_response
@@ -136,7 +129,6 @@ def request_ride(request):
 @csrf_exempt
 @api_view(['GET'])
 def find_driver_api(request, ride_id):
-    """Assign the nearest driver to the ride."""
     try:
         ride = Ride.objects.get(id=ride_id)
 
@@ -236,7 +228,7 @@ def cancel_ride(request, ride_id):
         return render(request, 'rides/cancel_ride.html', {
             'ride': ride,
             'reasons': [
-                ('Too far', 'Pickup location is too far'),
+                ('Wrong location', 'Wrong location entered'),
                 ('No driver', 'No driver available'),
                 ('Change of plans', 'Change of plans'),
                 ('Other', 'Other reason')
@@ -254,7 +246,6 @@ def cancel_ride(request, ride_id):
 
 
 def calculate_fare(pickup_latitude, pickup_longitude, drop_latitude, drop_longitude, cancelled=False):
-    """Calculate fare based on geodesic distance."""
     distance_km = geodesic((pickup_latitude, pickup_longitude), (drop_latitude, drop_longitude)).km
     fare = 50 + (distance_km * 10)
     if cancelled:
@@ -263,9 +254,7 @@ def calculate_fare(pickup_latitude, pickup_longitude, drop_latitude, drop_longit
 
 
 @login_required
-def book_ride(request):
-    """Book a ride as a customer."""
-    
+def book_ride(request):    
     if request.method == "POST":
         try:
             print(request)
@@ -298,7 +287,6 @@ def book_ride(request):
 
 @login_required
 def ride_details(request, ride_id):
-    """View details of a specific ride."""
     try:
         ride = get_object_or_404(Ride, id=ride_id)
         return render(request, "rides/ride_details.html", {
@@ -346,7 +334,6 @@ def driver_dashboard(request):
 
 @login_required
 def dashboard(request):
-    """Main dashboard that redirects to appropriate dashboard based on user type"""
     try:
         if hasattr(request.user, 'driver'):
             return driver_dashboard(request)

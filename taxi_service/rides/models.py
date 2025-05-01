@@ -31,7 +31,7 @@ class Driver(models.Model):
         return f"{self.user.username} - Driver"
 
 REASONS = [
-    ('Driver delayed', 'Driver delayed'),
+    ('Pickup location far away', 'Pickup location far away'),
     ('Change of plans', 'Change of plans'),
     ('Found another ride', 'Found another ride'),
 ]
