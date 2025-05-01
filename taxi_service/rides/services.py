@@ -7,7 +7,6 @@ from decimal import Decimal
 User = get_user_model()
 
 class DriverService:
-    """Handle driver-related operations"""
     @staticmethod
     def get_driver_by_user(user):
         try:
@@ -30,7 +29,6 @@ class DriverService:
 
     @staticmethod
     def find_nearest_driver(pickup_lat, pickup_lon, max_distance_km=5):
-        """Find nearest available driver within specified radius"""
         available_drivers = Driver.objects.filter(
             is_available=True,
             latitude__isnull=False,
@@ -52,10 +50,8 @@ class DriverService:
         return nearest_driver
 
 class RideService:
-    """Handle ride-related operations"""
     @staticmethod
     def get_available_rides(driver):
-        """Get available rides within 5km radius of driver"""
         available_rides = Ride.objects.filter(
             status='Pending'
         ).exclude(
@@ -76,17 +72,14 @@ class RideService:
 
     @staticmethod
     def get_customer_rides(customer):
-        """Get all rides for a customer"""
         return Ride.objects.filter(customer=customer).order_by('-id')
 
     @staticmethod
     def get_driver_rides(driver):
-        """Get all rides for a driver"""
         return Ride.objects.filter(driver=driver).order_by('-id')
 
     @staticmethod
     def accept_ride(ride, driver):
-        """Accept a ride request"""
         if not DriverService.is_driver_available(driver):
             raise ValidationError("Driver is already on a ride")
         
@@ -101,14 +94,12 @@ class RideService:
 
     @staticmethod
     def decline_ride(ride, driver):
-        """Decline a ride request"""
         if ride.status != 'Pending':
             raise ValidationError("Cannot decline this ride")
         DeclinedRide.objects.create(driver=driver, ride=ride)
 
     @staticmethod
     def cancel_ride(ride, reason):
-        """Cancel a ride and handle cancellation fees"""
         if ride.status in ['Completed', 'Cancelled']:
             raise ValidationError("Cannot cancel this ride")
         
@@ -138,7 +129,6 @@ class RideService:
 
     @staticmethod
     def can_cancel_ride(ride, user):
-        """Check if user can cancel the ride"""
         if ride.customer == user and ride.status in ['Pending', 'Accepted']:
             return True
             
@@ -149,7 +139,6 @@ class RideService:
 
     @staticmethod
     def create_ride(customer, pickup_lat, pickup_lon, drop_lat, drop_lon):
-        """Create a new ride request"""
         distance = DistanceCalculator.calculate_distance(pickup_lat, pickup_lon, drop_lat, drop_lon)
         fare = Decimal(str(FareCalculator.calculate_fare(distance)))
         
@@ -176,7 +165,6 @@ class RideService:
 
     @staticmethod
     def complete_ride(ride):
-        """Complete a ride"""
         if ride.status != 'Accepted':
             raise ValidationError("Cannot complete this ride")
         
