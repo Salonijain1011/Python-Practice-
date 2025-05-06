@@ -44,13 +44,28 @@ def register_view(request):
         user = User.objects.create_user(username=username, password=password)
 
         if role == "driver":
+            # Create a basic driver profile
             Driver.objects.create(user=user, is_available=True)
+            # Create user profile
+            UserProfile.objects.create(user=user, user_type='driver')
+            # Log the user in
+            login(request, user)
             request.session["role"] = "driver"
+            # Redirect to driver details page
+            return JsonResponse({
+                "success": True, 
+                "message": "Initial registration successful!", 
+                "redirect_url": "/driver-details/"
+            })
         elif role == "customer":
+            # Create user profile
+            UserProfile.objects.create(user=user, user_type='customer')
             request.session["role"] = "customer"
-
-        login(request, user)
-        return JsonResponse({"success": True, "message": "User registered successfully!", "redirect_url": "/login/"})
+            return JsonResponse({
+                "success": True, 
+                "message": "User registered successfully!", 
+                "redirect_url": "/login/"
+            })
 
     return JsonResponse({"success": False, "error": "Invalid request method"}, status=405)
 
@@ -393,3 +408,55 @@ def get_driver_location(request, driver_id):
             'success': False,
             'error': str(e)
         }, status=500)
+
+@csrf_exempt
+def driver_details_view(request):
+    if not request.user.is_authenticated:
+        return redirect('login')
+        
+    if not hasattr(request.user, 'driver'):
+        return redirect('dashboard')
+        
+    # Check if registration is already completed
+    if request.user.driver.registration_completed:
+        messages.info(request, "Driver registration already completed.")
+        return redirect('driver_dashboard')
+        
+    if request.method == "GET":
+        form = DriverRegistrationForm()
+        return render(request, "driver_details.html", {"form": form})
+        
+    if request.method == "POST":
+        form = DriverRegistrationForm(request.POST)
+        if form.is_valid():
+            try:
+                # Update user profile
+                user_profile = UserProfile.objects.get_or_create(user=request.user)[0]
+                user_profile.phone_number = form.cleaned_data['phone_number']
+                user_profile.save()
+                
+                # Update user's first and last name
+                request.user.first_name = form.cleaned_data['full_name']
+                request.user.save()
+                
+                # Update driver details
+                driver = request.user.driver
+                driver.license_number = form.cleaned_data['license_number']
+                driver.car_model = form.cleaned_data['car_model']
+                driver.car_plate_number = form.cleaned_data['car_plate_number']
+                driver.car_type = form.cleaned_data['car_type']
+                driver.latitude = form.cleaned_data['latitude']
+                driver.longitude = form.cleaned_data['longitude']
+                driver.registration_completed = True
+                driver.save()
+                
+                messages.success(request, "Driver registration completed successfully!")
+                return redirect('driver_dashboard')
+            except Exception as e:
+                messages.error(request, f"An error occurred: {str(e)}")
+        else:
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f"{field}: {error}")
+                    
+    return render(request, "driver_details.html", {"form": form})

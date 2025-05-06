@@ -26,6 +26,10 @@ class Driver(models.Model):
     is_available = models.BooleanField(default=True)
     rating = models.FloatField(default=5.0)
     car_type = models.CharField(max_length=50, default="Sedan")
+    license_number = models.CharField(max_length=50, null=True, blank=True)
+    car_model = models.CharField(max_length=100, null=True, blank=True)
+    car_plate_number = models.CharField(max_length=20, null=True, blank=True)
+    registration_completed = models.BooleanField(default=False)
 
     def __str__(self):
         return f"{self.user.username} - Driver"

@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="text-center">Complete Driver Registration</h3>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{% url 'driver_details' %}">
+                        {% csrf_token %}
+                        {% if messages %}
+                            {% for message in messages %}
+                                <div class="alert alert-{{ message.tags }}">
+                                    {{ message }}
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                        
+                        <div class="form-group mb-3">
+                            <label for="phone_number">Phone Number</label>
+                            <input type="tel" class="form-control" id="phone_number" name="phone_number" required>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label for="full_name">Full Name</label>
+                            <input type="text" class="form-control" id="full_name" name="full_name" required>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label for="license_number">License Number</label>
+                            <input type="text" class="form-control" id="license_number" name="license_number" required>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label for="car_model">Car Model</label>
+                            <input type="text" class="form-control" id="car_model" name="car_model" required>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label for="car_plate_number">Car Plate Number</label>
+                            <input type="text" class="form-control" id="car_plate_number" name="car_plate_number" required>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label for="car_type">Car Type</label>
+                            <select class="form-control" id="car_type" name="car_type" required>
+                                <option value="">Select Car Type</option>
+                                <option value="Sedan">Sedan</option>
+                                <option value="SUV">SUV</option>
+                                <option value="Luxury">Luxury</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label for="latitude">Latitude</label>
+                            <input type="number" step="any" class="form-control" id="latitude" name="latitude" required>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label for="longitude">Longitude</label>
+                            <input type="number" step="any" class="form-control" id="longitude" name="longitude" required>
+                        </div>
+
+                        <div class="text-center">
+                            <button type="submit" class="btn btn-primary">Complete Registration</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 
