@@ -58,6 +58,7 @@ class Ride(models.Model):
     cancellation_fee = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     estimated_time = models.CharField(max_length=50, null=True, blank=True)
     cancellation_reason = models.CharField(max_length=50, choices=REASONS, null=True, blank=True)
+    driver_rating = models.FloatField(null=True, blank=True)
 
     def cancel_ride(self, reason):
         self.status = 'Cancelled'

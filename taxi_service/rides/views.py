@@ -12,6 +12,7 @@ from django.core.exceptions import ValidationError
 from django.contrib import messages
 from django.conf import settings
 from datetime import datetime, timedelta
+from django.db.models import Avg
 
 from .models import Driver, Ride, DeclinedRide, UserProfile
 from .serializers import DriverSerializer, RideSerializer
@@ -44,21 +45,16 @@ def register_view(request):
         user = User.objects.create_user(username=username, password=password)
 
         if role == "driver":
-            # Create a basic driver profile
             Driver.objects.create(user=user, is_available=True)
-            # Create user profile
             UserProfile.objects.create(user=user, user_type='driver')
-            # Log the user in
             login(request, user)
             request.session["role"] = "driver"
-            # Redirect to driver details page
             return JsonResponse({
                 "success": True, 
                 "message": "Initial registration successful!", 
                 "redirect_url": "/driver-details/"
             })
         elif role == "customer":
-            # Create user profile
             UserProfile.objects.create(user=user, user_type='customer')
             request.session["role"] = "customer"
             return JsonResponse({
@@ -98,24 +94,20 @@ def logout_user(request):
     logout(request)
     return redirect("login")
 
-
 class AvailableDriversView(generics.ListAPIView):
     queryset = Driver.objects.filter(is_available=True)
     serializer_class = DriverSerializer
-
 
 def validate_request_data(request, required_fields):
     if not all(request.data.get(field) for field in required_fields):
         return Response({"error": "Missing required fields"}, status=400)
     return None
 
-
 def get_customer_by_id(customer_id):
     try:
         return User.objects.get(id=customer_id)
     except User.DoesNotExist:
         return Response({"error": "Customer not found"}, status=404)
-
 
 @csrf_exempt
 @api_view(['POST'])
@@ -417,7 +409,6 @@ def driver_details_view(request):
     if not hasattr(request.user, 'driver'):
         return redirect('dashboard')
         
-    # Check if registration is already completed
     if request.user.driver.registration_completed:
         messages.info(request, "Driver registration already completed.")
         return redirect('driver_dashboard')
@@ -430,16 +421,13 @@ def driver_details_view(request):
         form = DriverRegistrationForm(request.POST)
         if form.is_valid():
             try:
-                # Update user profile
                 user_profile = UserProfile.objects.get_or_create(user=request.user)[0]
                 user_profile.phone_number = form.cleaned_data['phone_number']
                 user_profile.save()
                 
-                # Update user's first and last name
                 request.user.first_name = form.cleaned_data['full_name']
                 request.user.save()
                 
-                # Update driver details
                 driver = request.user.driver
                 driver.license_number = form.cleaned_data['license_number']
                 driver.car_model = form.cleaned_data['car_model']
@@ -450,8 +438,9 @@ def driver_details_view(request):
                 driver.registration_completed = True
                 driver.save()
                 
-                messages.success(request, "Driver registration completed successfully!")
-                return redirect('driver_dashboard')
+                logout(request)
+                messages.success(request, "Driver registration completed successfully! Please login.")
+                return redirect('login')
             except Exception as e:
                 messages.error(request, f"An error occurred: {str(e)}")
         else:
@@ -460,3 +449,40 @@ def driver_details_view(request):
                     messages.error(request, f"{field}: {error}")
                     
     return render(request, "driver_details.html", {"form": form})
+
+@login_required
+def toggle_availability(request):
+    if not hasattr(request.user, 'driver'):
+        messages.error(request, "Only drivers can toggle availability.")
+        return redirect('dashboard')
+
+    if request.method == 'POST':
+        driver = request.user.driver
+        driver.is_available = not driver.is_available
+        driver.save()
+        messages.success(
+            request,
+            f"You are now {'available' if driver.is_available else 'not available'} for rides."
+        )
+    return redirect('driver_dashboard')
+
+@login_required
+def rate_driver(request, ride_id):
+    ride = get_object_or_404(Ride, id=ride_id, customer=request.user, status='Completed')
+    if request.method == 'POST':
+        try:
+            rating = float(request.POST.get('rating'))
+            if 1 <= rating <= 5:
+                ride.driver_rating = rating
+                ride.save()
+                driver = ride.driver
+                driver_rides = Ride.objects.filter(driver=driver, driver_rating__isnull=False)
+                avg_rating = driver_rides.aggregate(Avg('driver_rating'))['driver_rating__avg']
+                driver.rating = round(avg_rating, 1)
+                driver.save()
+                messages.success(request, "Thank you for rating your driver!")
+            else:
+                messages.error(request, "Invalid rating value.")
+        except Exception:
+            messages.error(request, "An error occurred while submitting your rating.")
+    return redirect('ride_details', ride_id=ride_id)

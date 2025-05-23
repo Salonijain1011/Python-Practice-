@@ -52,11 +52,17 @@ class DriverService:
 class RideService:
     @staticmethod
     def get_available_rides(driver):
+        print(f"Checking available rides for driver {driver.id}")
+        print(f"Driver location: {driver.latitude}, {driver.longitude}")
+        print(f"Driver available: {driver.is_available}")
+        
         available_rides = Ride.objects.filter(
             status='Pending'
         ).exclude(
             id__in=DeclinedRide.objects.filter(driver=driver).values_list('ride_id', flat=True)
         )
+        
+        print(f"Total pending rides: {available_rides.count()}")
         
         nearby_rides = []
         for ride in available_rides:
@@ -64,10 +70,13 @@ class RideService:
                 driver.latitude, driver.longitude,
                 ride.pickup_latitude, ride.pickup_longitude
             )
+            print(f"Ride {ride.id} - Distance: {distance}km")
             if distance <= 5:  
                 ride.distance_to_driver = round(distance, 2)
                 nearby_rides.append(ride)
+                print(f"Added ride {ride.id} to nearby rides")
                 
+        print(f"Total nearby rides: {len(nearby_rides)}")
         return nearby_rides
 
     @staticmethod

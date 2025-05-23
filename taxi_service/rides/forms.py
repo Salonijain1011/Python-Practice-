@@ -25,7 +25,7 @@ class DriverRegistrationForm(forms.Form):
     car_type = forms.ChoiceField(choices=[
         ('Sedan', 'Sedan'),
         ('SUV', 'SUV'),
-        ('Luxury', 'Luxury'),
+        ('Premium', 'Premium'),
     ], required=True)
     latitude = forms.FloatField(required=True)
     longitude = forms.FloatField(required=True)
@@ -58,5 +58,5 @@ class RideBookingForm(forms.ModelForm):
     car_type = forms.ChoiceField(choices=[
         ('Sedan', 'Sedan'),
         ('SUV', 'SUV'),
-        ('Luxury', 'Luxury'),
+        ('Premium', 'Premium'),
     ]) 
