@@ -16,7 +16,7 @@ from django.db.models import Avg
 
 from .models import Driver, Ride, DeclinedRide, UserProfile
 from .serializers import DriverSerializer, RideSerializer
-from .utils import find_nearest_driver, DistanceCalculator
+from .utils import find_nearest_driver, DistanceCalculator, FareCalculator, CancellationPolicy
 from .forms import UserRegistrationForm, DriverRegistrationForm, RideBookingForm
 from .services import DriverService, RideService
 
@@ -128,6 +128,7 @@ def request_ride(request):
         pickup_longitude=request.data.get('pickup_longitude'),
         drop_latitude=request.data.get('drop_latitude'),
         drop_longitude=request.data.get('drop_longitude'),
+        car_type = request.POST.get("car_type", "Sedan"),
         fare=fare
     )
     return Response(RideSerializer(ride).data, status=201)
@@ -269,6 +270,7 @@ def book_ride(request):
             pickup_longitude = float(request.POST.get("pickup_longitude"))
             drop_latitude = float(request.POST.get("drop_latitude"))
             drop_longitude = float(request.POST.get("drop_longitude"))
+            car_type = request.POST.get("car_type", "Sedan")
             print(pickup_latitude, pickup_longitude, drop_latitude, drop_longitude)
         except (ValueError, TypeError):
             return render(request, "book_ride.html", {"error": "Invalid or missing coordinates."})
@@ -279,7 +281,8 @@ def book_ride(request):
                 pickup_latitude,
                 pickup_longitude,
                 drop_latitude,
-                drop_longitude
+                drop_longitude,
+                car_type=car_type
             )
             # ride_id=10
             # return redirect("ride_details", ride_id=ride.id)

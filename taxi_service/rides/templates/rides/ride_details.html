@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+<!-- {% extends 'base.html' %}
 {% load static %}
 
 {% block extra_head %}
@@ -54,6 +54,7 @@
                         </span>
                     </p>
                     <p><strong>Fare:</strong> ₹{{ ride.fare }}</p>
+                    <p><strong>Estimated Time:</strong> {{ ride.estimated_time }}</p>
                 </div>
                 <div class="col-md-6">
                     <h5>Location Details</h5>
@@ -187,4 +188,4 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 {% endif %}
-{% endblock %} 
+{% endblock %}  

@@ -147,10 +147,18 @@ class RideService:
         return False
 
     @staticmethod
-    def create_ride(customer, pickup_lat, pickup_lon, drop_lat, drop_lon):
-        distance = DistanceCalculator.calculate_distance(pickup_lat, pickup_lon, drop_lat, drop_lon)
-        fare = Decimal(str(FareCalculator.calculate_fare(distance)))
-        
+    def create_ride(customer, pickup_lat, pickup_lon, drop_lat, drop_lon, car_type="Sedan"):
+        """
+        Creates a new ride request, calculates fare and ETA.
+        Accepts car_type for ETA calculation.
+        """
+        # Use the DistanceCalculator from utils
+        distance_km = DistanceCalculator.calculate_distance(pickup_lat, pickup_lon, drop_lat, drop_lon)
+
+        # Use the FareCalculator from utils
+        fare = Decimal(str(FareCalculator.calculate_fare(distance_km)))
+
+        # Handle pending cancellation fee (existing logic from your services.py)
         try:
             customer_profile = customer.userprofile
             if customer_profile.pending_cancellation_fee > 0:
@@ -158,18 +166,59 @@ class RideService:
                 customer_profile.pending_cancellation_fee = Decimal('0')
                 customer_profile.save()
         except UserProfile.DoesNotExist:
-            pass
-            
+            # Create a profile if it doesn't exist (optional, but good practice if needed)
+            # UserProfile.objects.create(user=customer, pending_cancellation_fee=Decimal('0'))
+            pass # Or handle as per your application logic
+
+        # --- ETA Calculation Logic (Based on your rules) ---
+        estimated_minutes = None
+        speed_kph = 60.0 # Default for Sedan
+        penalty_per_unit = 5.0 # Default penalty for Sedan (per hour)
+        penalty_unit = "hour" # Unit for Sedan penalty
+
+        if car_type == "SUV":
+            speed_kph = 80.0
+            penalty_per_unit = 3.0 # Penalty per km
+            penalty_unit = "km"
+        elif car_type == "Premium":
+            speed_kph = 100.0
+            penalty_per_unit = 2.0 # Penalty per km
+            penalty_unit = "km"
+
+        # Calculate base travel time in minutes
+        if speed_kph > 0:
+            base_travel_hours = distance_km / speed_kph
+            base_travel_minutes = base_travel_hours * 60.0
+
+            # Calculate penalty based on unit
+            if penalty_unit == "hour":
+                penalty_minutes = base_travel_hours * penalty_per_unit
+            elif penalty_unit == "km":
+                 penalty_minutes = distance_km * penalty_per_unit
+            else: # Should not happen with current logic, but good for robustness
+                 penalty_minutes = 0
+
+            estimated_minutes = base_travel_minutes + penalty_minutes
+        else: # Avoid division by zero if speed_kph is somehow 0
+            estimated_minutes = float('inf') # Effectively infinite time
+
+        # Format the estimated time as a string
+        estimated_time_str = f"{round(estimated_minutes)} minutes" if estimated_minutes is not None and estimated_minutes != float('inf') else "Calculating..." # Or a suitable default
+        # --- End ETA Calculation Logic ---
+
+
         ride = Ride.objects.create(
             customer=customer,
             pickup_latitude=pickup_lat,
             pickup_longitude=pickup_lon,
             drop_latitude=drop_lat,
             drop_longitude=drop_lon,
+            car_type=car_type, # Make sure car_type is saved to the model
             fare=fare,
-            status='Pending'
+            status='Pending',
+            estimated_time=estimated_time_str # Save the calculated ETA to the model
         )
-        
+
         return ride
 
     @staticmethod

@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% comment %} {% extends "base.html" %}
 {% block content %}
 <div class="container mt-5">
     <h2 class="text-center mb-4">Ride Details</h2>
@@ -10,6 +10,7 @@
             <p><strong>Cab Type:</strong> {{ ride.car_type }}</p>
             <p><strong>Status:</strong> <span id="ride-status">{{ ride.status }}</span></p>
             <p><strong>Fare:</strong> ₹<span id="ride-fare">{{ ride.fare }}</span></p>
+            <p><strong>Estimated Time:</strong> {{ ride.estimated_time }}</p>
 
             {% if request.user.is_authenticated and request.user.profile.role == "customer" %}
                 {% if ride.status == "Pending" %}
@@ -106,4 +107,4 @@
     }
 </script>
 
-{% endblock %} 
+{% endblock %}  {% endcomment %}
