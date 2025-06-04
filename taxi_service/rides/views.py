@@ -11,20 +11,17 @@ from geopy.distance import geodesic
 from django.core.exceptions import ValidationError
 from django.contrib import messages
 from django.conf import settings
-from datetime import datetime, timedelta
+# from datetime import datetime, timedelta
 from django.db.models import Avg
-
 from .models import Driver, Ride, DeclinedRide, UserProfile
 from .serializers import DriverSerializer, RideSerializer
-from .utils import find_nearest_driver, DistanceCalculator, FareCalculator, CancellationPolicy
+from .utils import find_nearest_driver, DistanceCalculator
 from .forms import UserRegistrationForm, DriverRegistrationForm, RideBookingForm
 from .services import DriverService, RideService
-
 import json
-import requests
+# import requests
 
 User = get_user_model()
-
 
 @csrf_exempt
 def register_view(request):
