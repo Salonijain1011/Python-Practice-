@@ -60,7 +60,6 @@
 <div class="container mt-4">
     <h2>Driver Dashboard</h2>
     
-    <!-- Availability Toggle -->
     <div class="availability-toggle">
         <div class="card">
             <div class="card-body">
@@ -77,7 +76,6 @@
         </div>
     </div>
     
-    <!-- Map Container -->
     <div class="row mb-4">
         <div class="col-12">
             <div class="card">
@@ -155,7 +153,6 @@ document.addEventListener('DOMContentLoaded', function() {
             zoom: 12
         });
 
-        // Add driver marker
         new mapboxgl.Marker()
             .setLngLat([{{ driver.longitude }}, {{ driver.latitude }}])
             .addTo(map);

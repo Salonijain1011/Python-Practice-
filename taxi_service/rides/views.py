@@ -7,19 +7,16 @@ from rest_framework import generics, status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from geopy.distance import geodesic
 from django.core.exceptions import ValidationError
 from django.contrib import messages
 from django.conf import settings
-# from datetime import datetime, timedelta
 from django.db.models import Avg
 from .models import Driver, Ride, DeclinedRide, UserProfile
 from .serializers import DriverSerializer, RideSerializer
-from .utils import find_nearest_driver, DistanceCalculator
+from .utils import DistanceCalculator, FareCalculator
 from .forms import UserRegistrationForm, DriverRegistrationForm, RideBookingForm
 from .services import DriverService, RideService
 import json
-# import requests
 
 User = get_user_model()
 
@@ -57,7 +54,7 @@ def register_view(request):
             return JsonResponse({
                 "success": True, 
                 "message": "User registered successfully!", 
-                "redirect_url": "/login/"
+                "redirect_url": "/"
             })
 
     return JsonResponse({"success": False, "error": "Invalid request method"}, status=405)
@@ -89,7 +86,7 @@ def login_view(request):
 @csrf_exempt
 def logout_user(request):
     logout(request)
-    return redirect("login")
+    return redirect("/")
 
 class AvailableDriversView(generics.ListAPIView):
     queryset = Driver.objects.filter(is_available=True)
@@ -117,18 +114,18 @@ def request_ride(request):
     if isinstance(customer, Response):
         return customer
 
-    fare = calculate_fare(request.data.get('pickup_latitude'), request.data.get('pickup_longitude'), request.data.get('drop_latitude'), request.data.get('drop_longitude'))
-
-    ride = Ride.objects.create(
-        customer=customer,
-        pickup_latitude=request.data.get('pickup_latitude'),
-        pickup_longitude=request.data.get('pickup_longitude'),
-        drop_latitude=request.data.get('drop_latitude'),
-        drop_longitude=request.data.get('drop_longitude'),
-        car_type = request.POST.get("car_type", "Sedan"),
-        fare=fare
-    )
-    return Response(RideSerializer(ride).data, status=201)
+    try:
+        ride = RideService.create_ride(
+            customer=customer,
+            pickup_lat=request.data.get('pickup_latitude'),
+            pickup_lon=request.data.get('pickup_longitude'),
+            drop_lat=request.data.get('drop_latitude'),
+            drop_lon=request.data.get('drop_longitude'),
+            car_type=request.POST.get("car_type", "Sedan")
+        )
+        return Response(RideSerializer(ride).data, status=201)
+    except ValidationError as e:
+        return Response({"error": str(e)}, status=400)
 
 
 @csrf_exempt
@@ -140,7 +137,7 @@ def find_driver_api(request, ride_id):
         if ride.status != "Pending":
             return JsonResponse({"error": "This ride has already been assigned or completed."}, status=400)
 
-        nearest_driver = find_nearest_driver(ride.pickup_latitude, ride.pickup_longitude)
+        nearest_driver = DriverService.find_nearest_driver(ride.pickup_latitude, ride.pickup_longitude)
 
         if nearest_driver:
             nearest_driver.is_available = False
@@ -219,13 +216,12 @@ def update_driver_location(request, driver_id):
 def cancel_ride(request, ride_id):
     try:
         ride = Ride.objects.get(id=ride_id)
-        
         if not RideService.can_cancel_ride(ride, request.user):
             messages.error(request, "You cannot cancel this ride.")
             return redirect('dashboard')
             
         if request.method == 'POST':
-            reason = request.POST.get('reason', 'No reason provided')
+            reason = request.POST.get('reason', 'Change of plans')
             RideService.cancel_ride(ride, reason)
             messages.success(request, "Ride cancelled successfully.")
             return redirect('dashboard')
@@ -239,36 +235,21 @@ def cancel_ride(request, ride_id):
                 ('Other', 'Other reason')
             ]
         })
-    except Ride.DoesNotExist:
-        messages.error(request, "Ride not found.")
-        return redirect('dashboard')
-    except ValidationError as e:
+    except (Ride.DoesNotExist, ValidationError) as e:
         messages.error(request, str(e))
-        return redirect('dashboard')
     except Exception as e:
         messages.error(request, "An error occurred while cancelling the ride.")
-        return redirect('dashboard')
-
-
-def calculate_fare(pickup_latitude, pickup_longitude, drop_latitude, drop_longitude, cancelled=False):
-    distance_km = geodesic((pickup_latitude, pickup_longitude), (drop_latitude, drop_longitude)).km
-    fare = 50 + (distance_km * 10)
-    if cancelled:
-        fare += 0.05 * fare
-    return round(fare, 2)
-
+    return redirect('dashboard')
 
 @login_required
 def book_ride(request):    
     if request.method == "POST":
         try:
-            print(request)
             pickup_latitude = float(request.POST.get("pickup_latitude"))
             pickup_longitude = float(request.POST.get("pickup_longitude"))
             drop_latitude = float(request.POST.get("drop_latitude"))
             drop_longitude = float(request.POST.get("drop_longitude"))
             car_type = request.POST.get("car_type", "Sedan")
-            print(pickup_latitude, pickup_longitude, drop_latitude, drop_longitude)
         except (ValueError, TypeError):
             return render(request, "book_ride.html", {"error": "Invalid or missing coordinates."})
 
@@ -281,8 +262,6 @@ def book_ride(request):
                 drop_longitude,
                 car_type=car_type
             )
-            # ride_id=10
-            # return redirect("ride_details", ride_id=ride.id)
             return redirect('dashboard')
         except ValidationError as e:
             return render(request, "book_ride.html", {"error": str(e)})
@@ -290,7 +269,6 @@ def book_ride(request):
             return render(request, "book_ride.html",  {"error": str(e)})
 
     return render(request, "book_ride.html")
-
 
 @login_required
 def ride_details(request, ride_id):
@@ -364,21 +342,17 @@ def ride_status(request, ride_id):
 
 @login_required
 def complete_ride(request, ride_id):
+    if request.method != 'POST':
+        return redirect('driver_dashboard')
+        
     try:
         ride = Ride.objects.get(id=ride_id)
-        driver = DriverService.get_driver_by_user(request.user)
-        
-        if ride.driver != driver:
-            messages.error(request, "You are not assigned to this ride.")
-            return redirect('driver_dashboard')
-            
         RideService.complete_ride(ride)
         messages.success(request, "Ride completed successfully!")
     except (Ride.DoesNotExist, ValidationError) as e:
         messages.error(request, str(e))
     except Exception as e:
         messages.error(request, "An error occurred while completing the ride.")
-    
     return redirect('driver_dashboard')
 
 @login_required

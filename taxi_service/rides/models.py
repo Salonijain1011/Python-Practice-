@@ -60,12 +60,6 @@ class Ride(models.Model):
     cancellation_reason = models.CharField(max_length=50, choices=REASONS, null=True, blank=True)
     driver_rating = models.FloatField(null=True, blank=True)
 
-    def cancel_ride(self, reason):
-        self.status = 'Cancelled'
-        self.cancellation_fee = self.fare * Decimal('0.05')  
-        self.cancellation_reason = reason
-        self.save()
-
 class DeclinedRide(models.Model):
     driver = models.ForeignKey(Driver, on_delete=models.CASCADE)
     ride = models.ForeignKey(Ride, on_delete=models.CASCADE)

@@ -65,14 +65,12 @@ mapboxgl.accessToken = '{{ MAPBOX_ACCESS_TOKEN }}';
 const map = new mapboxgl.Map({
     container: 'map',
     style: 'mapbox://styles/mapbox/streets-v12',
-    center: [77.2090, 28.6139], // Default to New Delhi
+    center: [77.2090, 28.6139], 
     zoom: 12
 });
 
-// Add navigation controls
 map.addControl(new mapboxgl.NavigationControl());
 
-// Initialize geocoders
 const geocoderPickup = new MapboxGeocoder({
     accessToken: mapboxgl.accessToken,
     mapboxgl: mapboxgl,
@@ -87,11 +85,9 @@ const geocoderDrop = new MapboxGeocoder({
     marker: true
 });
 
-// Add geocoders to the page
 document.getElementById('geocoder-pickup').appendChild(geocoderPickup.onAdd(map));
 document.getElementById('geocoder-drop').appendChild(geocoderDrop.onAdd(map));
 
-// Handle geocoder results
 geocoderPickup.on('result', function(e) {
     document.getElementById('pickup_latitude').value = e.result.center[1];
     document.getElementById('pickup_longitude').value = e.result.center[0];
@@ -102,7 +98,6 @@ geocoderDrop.on('result', function(e) {
     document.getElementById('drop_longitude').value = e.result.center[0];
 });
 
-// Form validation
 document.getElementById('rideForm').addEventListener('submit', function(e) {
     if (!document.getElementById('pickup_latitude').value || 
         !document.getElementById('drop_latitude').value) {

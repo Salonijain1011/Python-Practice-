@@ -52,17 +52,11 @@ class DriverService:
 class RideService:
     @staticmethod
     def get_available_rides(driver):
-        print(f"Checking available rides for driver {driver.id}")
-        print(f"Driver location: {driver.latitude}, {driver.longitude}")
-        print(f"Driver available: {driver.is_available}")
-        
         available_rides = Ride.objects.filter(
             status='Pending'
         ).exclude(
             id__in=DeclinedRide.objects.filter(driver=driver).values_list('ride_id', flat=True)
         )
-        
-        print(f"Total pending rides: {available_rides.count()}")
         
         nearby_rides = []
         for ride in available_rides:
@@ -70,13 +64,10 @@ class RideService:
                 driver.latitude, driver.longitude,
                 ride.pickup_latitude, ride.pickup_longitude
             )
-            print(f"Ride {ride.id} - Distance: {distance}km")
             if distance <= 5:  
                 ride.distance_to_driver = round(distance, 2)
                 nearby_rides.append(ride)
-                print(f"Added ride {ride.id} to nearby rides")
                 
-        print(f"Total nearby rides: {len(nearby_rides)}")
         return nearby_rides
 
     @staticmethod
@@ -112,7 +103,7 @@ class RideService:
         if ride.status in ['Completed', 'Cancelled']:
             raise ValidationError("Cannot cancel this ride")
         
-        cancellation_fee = ride.fare * Decimal('0.05')
+        cancellation_fee = CancellationPolicy.calculate_cancellation_fee(ride.fare)
         
         ride.status = 'Cancelled'
         ride.cancellation_reason = reason
@@ -147,10 +138,8 @@ class RideService:
 
     @staticmethod
     def create_ride(customer, pickup_lat, pickup_lon, drop_lat, drop_lon, car_type="Sedan"):
-       
         distance_km = DistanceCalculator.calculate_distance(pickup_lat, pickup_lon, drop_lat, drop_lon)
-
-        fare = Decimal(str(FareCalculator.calculate_fare(distance_km)))
+        fare = FareCalculator.calculate_fare(distance_km)
 
         try:
             customer_profile = customer.userprofile
@@ -182,9 +171,9 @@ class RideService:
             if penalty_unit == "hour":
                 penalty_minutes = base_travel_hours * penalty_per_unit
             elif penalty_unit == "km":
-                 penalty_minutes = distance_km * penalty_per_unit
+                penalty_minutes = distance_km * penalty_per_unit
             else: 
-                 penalty_minutes = 0
+                penalty_minutes = 0
 
             estimated_minutes = base_travel_minutes + penalty_minutes
         else: 
